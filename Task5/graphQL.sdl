@@ -1,0 +1,117 @@
+# GraphQL Schema для клиентского сервиса
+type Query {
+  # Получение клиента с возможностью включения связанных данных
+  client(id: ID!): Client
+  
+  # Поиск клиентов с фильтрацией и пагинацией
+  clients(
+    filter: ClientFilter
+    pagination: PaginationInput
+  ): ClientConnection
+}
+
+# Основной тип клиента
+type Client {
+  id: ID!
+  name: String!
+  age: Int!
+  
+  # Связанные данные - загружаются только при запросе
+  documents(
+    type: DocumentType
+    pagination: PaginationInput
+  ): [Document!]!
+  
+  relatives(
+    relationType: RelationType
+    pagination: PaginationInput
+  ): [Relative!]!
+  
+  # Дополнительные вычисляемые поля
+  documentsCount: Int!
+  relativesCount: Int!
+  hasValidDocuments: Boolean!
+}
+
+# Тип документа с улучшенной типизацией
+type Document {
+  id: ID!
+  type: DocumentType!
+  number: String!
+  issueDate: Date!
+  expiryDate: Date
+  isExpired: Boolean!
+  isValid: Boolean!
+  
+  # Обратная связь
+  client: Client!
+}
+
+# Тип родственника
+type Relative {
+  id: ID!
+  relationType: RelationType!
+  name: String!
+  age: Int!
+  
+  # Обратная связь
+  client: Client!
+}
+
+# Пагинация с курсорами
+type ClientConnection {
+  edges: [ClientEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type ClientEdge {
+  node: Client!
+  cursor: String!
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+# Enums для лучшей типизации
+enum DocumentType {
+  ...
+}
+
+enum RelationType {
+  ...
+}
+
+# Input типы для фильтрации
+input ClientFilter {
+  name: String
+  ageRange: AgeRangeInput
+  hasDocuments: Boolean
+  hasRelatives: Boolean
+}
+
+input AgeRangeInput {
+  min: Int
+  max: Int
+}
+
+input PaginationInput {
+  first: Int
+  after: String
+  last: Int
+  before: String
+}
+
+# Кастомные скалярные типы
+scalar Date
+
+type Error {
+  field: String
+  message: String!
+  code: String!
+}
+
